@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto de Medição de Temperatura e Umidade</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 2em;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 850px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 8px;
+            margin-top: 1.5em;
+        }
+        p {
+            margin-bottom: 1.5em;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 25px auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Projeto de Monitoramento de Temperatura e Umidade com IoT</h1>
+        <p>Este projeto acadêmico foca na criação de um sistema de monitoramento ambiental utilizando um sensor <strong>DHT11</strong> para coletar dados de temperatura e umidade. A arquitetura do sistema é composta por um microcontrolador <strong>Arduino Uno</strong> que lê os dados do sensor e os transmite para um módulo <strong>ESP32</strong>, que funciona como o gateway IoT, enviando as informações para a nuvem.</p>
+
+        <h2>Componentes do Projeto</h2>
+        <ul>
+            <li>Arduino Uno</li>
+            <li>Módulo ESP32 (como módulo de comunicação Wi-Fi)</li>
+            <li>Sensor de temperatura e umidade DHT11</li>
+            <li>Protoboard</li>
+            <li>Cabos Jumper</li>
+            <li>Resistor de 4.7kΩ (necessário para a leitura do DHT11)</li>
+        </ul>
+
+        <h2>Diagrama e Protótipo</h2>
+        <p>A imagem abaixo ilustra a montagem do circuito na protoboard, destacando as conexões entre o Arduino Uno e o sensor DHT11. O pino de dados do sensor está conectado ao pino digital D2 do Arduino, com o resistor de 4.7kΩ para garantir a estabilidade do sinal.</p>
+        <img src="images/prototipo-dht11-esp32.jpg" alt="Diagrama de montagem do projeto">
+        <p><strong>Instrução:</strong> Faça o upload da imagem do seu protótipo para a pasta <code>images</code> do seu repositório no GitHub e renomeie-a para <code>prototipo-dht11-esp32.jpg</code> para que ela seja exibida corretamente na página.</p>
+
+        <h2>Aplicativo de Monitoramento</h2>
+        <p>Para visualizar os dados coletados de forma interativa, o projeto inclui um aplicativo móvel. Ele será desenvolvido utilizando a plataforma <strong>App Inventor</strong>, que permite a criação de apps para Android de forma visual e intuitiva, sem a necessidade de codificação complexa. Esse aplicativo se comunicará com o módulo ESP32 para exibir a temperatura e umidade em tempo real.</p>
+        
+        <h2>Código-Fonte para o Arduino Uno</h2>
+        <p>O código a seguir foi desenvolvido no Arduino IDE e é responsável por inicializar o sensor, realizar as leituras periódicas de temperatura e umidade, e imprimir os resultados no monitor serial para serem capturados pelo módulo ESP32. As leituras são formatadas para facilitar a comunicação entre os dois microcontroladores.</p>
+
+        <div class="code-block">
+            <pre><code>
+#include &lt;DHT.h&gt;
+
+#define DHTPIN 2      // Pino digital onde o sensor DHT11 está conectado
+#define DHTTYPE DHT11   // Tipo do sensor: DHT11
+
+// Inicializa o sensor DHT
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(9600); // Inicia a comunicação serial a 9600 bps
+  Serial.println("Iniciando o sensor DHT11...");
+  dht.begin();
+}
+
+void loop() {
+  // A leitura do sensor DHT11 leva cerca de 250ms,
+  // então é bom ter um intervalo de pelo menos 2 segundos entre leituras.
+  delay(2000);
+
+  // Lê a umidade e a temperatura em graus Celsius
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  // Verifica se a leitura falhou (retorna 'NaN')
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Erro: Falha ao ler do sensor DHT11!");
+    return;
+  }
+
+  // Envia os dados pela porta serial em um formato legível para o ESP32
+  // Exemplo de saída: "T:25.50,H:60.20"
+  Serial.print("T:");
+  Serial.print(t);
+  Serial.print(",H:");
+  Serial.println(h);
+}
+            </code></pre>
+        </div>
+    </div>
+
+</body>
+</html>
