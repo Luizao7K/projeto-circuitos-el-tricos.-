@@ -63,8 +63,8 @@
 <body>
 
     <div class="container">
-        <h1>Projeto de Monitoramento de Temperatura e Umidade com IoT</h1>
-        <p>Este projeto acadêmico foca na criação de um sistema de monitoramento ambiental utilizando um sensor <strong>DHT11</strong> para coletar dados de temperatura e umidade. A arquitetura do sistema é composta por um microcontrolador <strong>Arduino Uno</strong> que lê os dados do sensor e os transmite para um módulo <strong>ESP32</strong>, que funciona como o gateway IoT, enviando as informações para a nuvem.</p>
+        <h1>Projeto de Monitoramento de Temperatura e Umidade com IoT (ESP32)</h1>
+        <p>Este projeto acadêmico foca na criação de um sistema de monitoramento ambiental utilizando um sensor <strong>DHT22</strong> para coletar dados de temperatura e umidade. A arquitetura do sistema é composta por um microcontrolador <strong>ESP32</strong>, que funciona como o gateway IoT, lendo os dados do sensor, controlando atuadores e enviando as informações para a nuvem através de um servidor web integrado.</p>
 
         <h2>Contribuição para os ODS (Objetivos de Desenvolvimento Sustentável)</h2>
         <p>Este projeto está alinhado com vários Objetivos de Desenvolvimento Sustentável da ONU, contribuindo para avanços tecnológicos que promovem a sustentabilidade e o bem-estar social. As principais ODS impactadas são:</p>
@@ -85,76 +85,32 @@
 
         <h2>Componentes do Projeto</h2>
         <ul>
-            <li>Arduino Uno</li>
-            <li>Módulo ESP32 (como módulo de comunicação Wi-Fi)</li>
-            <li>Sensor de temperatura e umidade DHT11</li>
+            <li>Módulo ESP32 (como microcontrolador e módulo de comunicação Wi-Fi)</li>
+            <li>Sensor de temperatura e umidade DHT22 (o código usa DHT22, ajustei aqui)</li>
             <li>Protoboard</li>
             <li>Cabos Jumper</li>
-            <li>Resistor de 4.7kΩ (necessário para a leitura do DHT11)</li>
+            <li>Ar Condicionado (simulado por LED ou relé)</li>
+            <li>Umidificador (simulado por LED ou relé)</li>
         </ul>
         
         <h2>Equipe do Projeto</h2>
         <p>A equipe responsável pelo desenvolvimento deste projeto é composta pelos seguintes membros:</p>
         <ol>
             <li><strong>Gabriel Moreira Zampolli</strong>: 202403103</li>
-              <li><strong>Anderson Gabriel Geraldi De Godoi</strong>: 202411989</li>
+            <li><strong>Anderson Gabriel Geraldi De Godoi</strong>: 202411989</li>
             <li><strong>Luís Eduardo Dantas de Vasconcelos</strong>: 202413171</li>
             <li><strong>Allison Silva De Oliveira</strong>: 202446057</li>
             <li><strong>Gustavo Garcia Peres</strong>: 202416167</li> 
             <li><strong>Daniel Barbosa Vieira Dias</strong>: 202437819</li>
         </ol>
 
-        <h2>Diagrama e Protótipo</h2>
-        <p>A imagem abaixo ilustra a montagem do circuito na protoboard, destacando as conexões entre o Arduino Uno e o sensor DHT11. O pino de dados do sensor está conectado ao pino digital D2 do Arduino, com o resistor de 4.7kΩ para garantir a estabilidade do sinal.</p>
-        <img src="https://r.hswstatic.com/r_1280x720/hub/images/gr-ai/ee689a74-a63e-4369-ba78-2d2f70b6771d.png" alt="Sistema de monitoramento e controle de clima com ESP32">
+        <h2>Diagrama e Protótipo do Sistema</h2>
+        <p>A imagem abaixo ilustra a integração do sensor DHT com o módulo ESP32, controlando visualmente um ar condicionado e um umidificador, representando a automação do ambiente.</p>
+        <img src="https://r.hswstatic.com/r_1280x720/hub/images/gr-ai/ee689a74-a63e-4369-ba78-2d2f70b6771d.png" alt="Sistema de monitoramento e controle de clima com ESP32, DHT, ar condicionado e umidificador">
 
         <h2>Aplicativo de Monitoramento</h2>
         <p>Para visualizar os dados coletados de forma interativa, o projeto inclui um aplicativo móvel. Ele será desenvolvido utilizando a plataforma <strong>App Inventor</strong>, que permite a criação de apps para Android de forma visual e intuitiva, sem a necessidade de codificação complexa. Esse aplicativo se comunicará com o módulo ESP32 para exibir a temperatura e umidade em tempo real.</p>
         
-        <h2>Código-Fonte para o Arduino Uno</h2>
-        <p>O código a seguir foi desenvolvido no Arduino IDE e é responsável por inicializar o sensor, realizar as leituras periódicas de temperatura e umidade, e imprimir os resultados no monitor serial para serem capturados pelo módulo ESP32. As leituras são formatadas para facilitar a comunicação entre os dois microcontroladores.</p>
-
-        <div class="code-block">
-            <pre><code>
-#include &lt;DHT.h&gt;
-
-#define DHTPIN 2      // Pino digital onde o sensor DHT11 está conectado
-#define DHTTYPE DHT11   // Tipo do sensor: DHT11
-
-// Inicializa o sensor DHT
-DHT dht(DHTPIN, DHTTYPE);
-
-void setup() {
-  Serial.begin(9600); // Inicia a comunicação serial a 9600 bps
-  Serial.println("Iniciando o sensor DHT11...");
-  dht.begin();
-}
-
-void loop() {
-  // A leitura do sensor DHT11 leva cerca de 250ms,
-  // então é bom ter um intervalo de pelo menos 2 segundos entre leituras.
-  delay(2000);
-
-  // Lê a umidade e a temperatura em graus Celsius
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-
-  // Verifica se a leitura falhou (retorna 'NaN')
-  if (isnan(h) || isnan(t)) {
-    Serial.println("Erro: Falha ao ler do sensor DHT11!");
-    return;
-  }
-
-  // Envia os dados pela porta serial em um formato legível para o ESP32
-  // Exemplo de saída: "T:25.50,H:60.20"
-  Serial.print("T:");
-  Serial.print(t);
-  Serial.print(",H:");
-  Serial.println(h);
-}
-            </code></pre>
-        </div>
-
         <h2>Código-Fonte para o ESP32</h2>
         <p>Este é o código principal que roda no ESP32. Ele é responsável por se conectar à rede Wi-Fi, criar um servidor web, ler os dados do sensor DHT22 e controlar os atuadores (representados por LEDs) com base em limiares de temperatura e umidade. Ele também fornece os dados para o aplicativo via uma URL específica (/dados).</p>
 
@@ -262,4 +218,9 @@ void loop() {
 
         <h2>Fluxograma de Funcionamento (ESP32)</h2>
         <p>O fluxograma a seguir representa a lógica de operação contínua do código do ESP32, desde a inicialização até o loop principal que lida com as requisições web e o controle do ambiente.</p>
-        <img src="https://storage.googleapis.com/gemini-prod/images/5f320b9b-c439-4d64-
+        <img src="https://storage.googleapis.com/gemini-prod/images/5f320b9b-c439-4d64-8de6-b184e55e003c.png" alt="Fluxograma do código ESP32">
+
+    </div>
+
+</body>
+</html>
