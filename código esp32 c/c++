@@ -1,0 +1,143 @@
+#include <WiFi.h>
+#include <WebServer.h> 
+#include <Adafruit_Sensor.h>
+#include "DHT.h"
+
+// --- Configurações de Rede ---
+const char* ssid = "  ";      // <<<< OBRIGATÓRIO: Nome da sua rede
+const char* password = "   "; // <<<< OBRIGATÓRIO: Senha da sua rede
+
+// Porta do servidor (padrão HTTP é 80)
+WebServer server(80); 
+
+// --- Definições de Hardware ---
+#define DHTPIN 4        // Pino digital onde o sensor DHT está conectado (GPIO 4)
+#define DHTTYPE DHT22   // Mude para DHT11 se estiver usando o DHT11
+
+// ===== PINOS ATUALIZADOS AQUI =====
+#define HUMIDIFIER_PIN 18 // Pino para o LED do Umidificador (GPIO 18)
+#define AC_PIN 19         // Pino para o LED do Ar Condicionado (GPIO 19)
+
+// --- Variáveis e Objetos ---
+DHT dht(DHTPIN, DHTTYPE);
+
+// Limites de Automação (Histerese)
+const float HUM_MIN = 55.0; // Liga Umidificador se H < 55%
+const float HUM_MAX = 65.0; // Desliga Umidificador se H >= 65%
+const float TEMP_MIN = 18.0; // Desliga AC se T < 18°C
+const float TEMP_MAX = 28.0; // Liga AC se T > 28°C
+
+// Variáveis globais para armazenar os últimos valores lidos
+float currentHumidity = 0.0;
+float currentTemperature = 0.0;
+
+// --- Funções de Leitura e Automação ---
+
+void readAndControl() {
+  // Leitura do Sensor DHT (Nomes de função corrigidos)
+  float h = dht.readHumidity();   
+  float t = dht.readTemperature(); 
+
+  if (isnan(h) || isnan(t)) {
+    Serial.println("Falha ao ler do sensor DHT!");
+    return;
+  }
+  
+  // Atualiza as variáveis globais (Nomes de variável corrigidos)
+  currentHumidity = h;
+  currentTemperature = t;
+
+  // --- Lógica de Automação dos Dispositivos (LEDs) ---
+
+  // 1. Controle do Umidificador (LED 18) - Humidade
+  if (currentHumidity < HUM_MIN) {
+    digitalWrite(HUMIDIFIER_PIN, HIGH);
+    Serial.println("Umidificador LIGADO (H<55%)");
+  } else if (currentHumidity >= HUM_MAX) {
+    digitalWrite(HUMIDIFIER_PIN, LOW);
+    Serial.println("Umidificador DESLIGADO (H>=65%)");
+  }
+
+  // 2. Controle do Ar Condicionado (LED 19) - Temperatura
+  if (currentTemperature > TEMP_MAX) {
+    digitalWrite(AC_PIN, HIGH);
+    Serial.println("Ar Condicionado LIGADO (T>28C)");
+  } else if (currentTemperature < TEMP_MIN) {
+    digitalWrite(AC_PIN, LOW);
+    Serial.println("Ar Condicionado DESLIGADO (T<18C)");
+  }
+
+  // Log no Serial Monitor (Sintaxe e variáveis corrigidas)
+  Serial.print("Leitura: T=");
+  Serial.print(currentTemperature);
+  Serial.print("C, H=");
+  Serial.print(currentHumidity);
+  Serial.println("%"); 
+}
+
+// --- Funções do Servidor Web ---
+
+// Endpoint para enviar os dados para o App Inventor: http://IP_DO_ESP32/dados
+void handleDataRequest() { 
+  readAndControl(); 
+
+  // Formato da resposta: "Temperatura,Humidade"
+  String response = String(currentTemperature, 2) + "," + String(currentHumidity, 2);
+  
+  server.send(200, "text/plain", response);
+}
+
+// Endpoint de teste (URL raiz): http://IP_DO_ESP32/
+void handleRoot() { 
+  String html = "<h1>Monitor de Clima ESP32 (Wi-Fi)</h1>";
+  html += "<p>Temperatura: " + String(currentTemperature, 2) + " &deg;C</p>";
+  html += "<p>Humidade: " + String(currentHumidity, 2) + " %</p>";
+
+  // CORREÇÃO: Forçando a conversão para String para evitar erro de concatenação
+  html += (String)"<p>Estado Umidificador: " + (digitalRead(HUMIDIFIER_PIN) == HIGH ? "LIGADO" : "DESLIGADO") + "</p>";
+  html += (String)"<p>Estado AC: " + (digitalRead(AC_PIN) == HIGH ? "LIGADO" : "DESLIGADO") + "</p>";
+  
+  html += "<p>Para o App Inventor, use a URL: <b>/dados</b></p>";
+  server.send(200, "text/html", html);
+}
+
+// --- Setup e Loop ---
+
+void setup() {
+  Serial.begin(115200);
+  dht.begin();
+  
+  // Configurações de Pinos (Nomes e constantes corrigidos)
+  pinMode(HUMIDIFIER_PIN, OUTPUT);
+  pinMode(AC_PIN, OUTPUT);
+  
+  digitalWrite(HUMIDIFIER_PIN, LOW);
+  digitalWrite(AC_PIN, LOW);
+
+  // --- Conexão Wi-Fi ---
+  Serial.print("Conectando-se à rede Wi-Fi: ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nConectado!");
+  Serial.print("IP do Servidor: ");
+  // Obtém e imprime o IP (Nome da função corrigido)
+  Serial.println(WiFi.localIP());
+
+  // --- Configuração do Servidor Web ---
+  server.on("/", handleRoot);          
+  server.on("/dados", handleDataRequest); 
+  server.begin();
+  Serial.println("Servidor HTTP iniciado.");
+}
+
+void loop() {
+  // Processa as requisições HTTP (Nome da função corrigido)
+  server.handleClient();
+  delay(100); 
+}
